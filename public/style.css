@@ -1,0 +1,189 @@
+:root {
+    --primary-color: #6366f1;
+    --primary-hover: #4f46e5;
+    --secondary-color: #f8fafc;
+    --text-dark: #1e293b;
+    --text-light: #64748b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--secondary-color);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.navbar {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.8) !important;
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar-brand {
+    font-weight: 800;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 1.75rem;
+}
+
+.nav-link {
+    position: relative;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    margin: 0 0.25rem;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--gradient);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+.welcome-section {
+    padding: 4rem 0;
+}
+
+.card {
+    border: none;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+    padding: 1.75rem;
+}
+
+.card-header h5 {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin: 0;
+}
+
+.form-label {
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.btn-primary {
+    background: var(--gradient);
+    border: none;
+    border-radius: 0.75rem;
+    padding: 1rem 2rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.feature-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.feature-list li {
+    padding: 0.75rem 0;
+    padding-left: 2.5rem;
+    position: relative;
+}
+
+.feature-list li:before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+    font-weight: bold;
+    background: rgba(99, 102, 241, 0.1);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.lead {
+    font-size: 1.125rem;
+    color: var(--text-light);
+}
+
+h1 {
+    font-weight: 800;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.5rem;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+}
+
+h4 {
+    color: var(--text-dark);
+    font-weight: 600;
+    margin-top: 2rem;
+}
+
+/* Add subtle background pattern */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 25px 25px, rgba(99, 102, 241, 0.05) 2%, transparent 0%),
+        radial-gradient(circle at 75px 75px, rgba(99, 102, 241, 0.05) 2%, transparent 0%);
+    background-size: 100px 100px;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2rem;
+    }
+    .card {
+        margin-top: 2rem;
+    }
+}
