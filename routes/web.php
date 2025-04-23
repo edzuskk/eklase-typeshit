@@ -6,6 +6,7 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TeacherGradeController;
 
 // Home and Auth routes
 Route::get('/', function () {
@@ -49,7 +50,16 @@ Route::middleware('auth')->group(function () {
             Route::put('/grades/{grade}', 'update')->name('grades.update');
             Route::delete('/grades/{grade}', 'destroy')->name('grades.destroy');
         });
+
+        Route::get('/students/{student}/grades/create', [TeacherGradeController::class, 'create'])
+            ->name('teacher.students.grades.create');
+        Route::post('/students/{student}/grades', [TeacherGradeController::class, 'store'])
+            ->name('teacher.students.grades.store');
     });
+
+    Route::post('/teacher/students/{student}/grades', [TeacherGradeController::class, 'store'])
+        ->name('teacher.students.grades.store')
+        ->middleware(['auth', 'role:teacher']);
 
     // Student routes
     Route::middleware('role:student')->prefix('student')->name('student.')->group(function () {

@@ -7,7 +7,7 @@
                     <p class="lead">A digital platform for managing student grades and academic progress.</p>
                     <div class="mt-4">
                         @guest
-                            <a href="{{ route('register') }}" class="btn btn-primary me-3">Get Started</a>
+                            <a href="{{ route('login') }}" class="btn btn-primary me-3">Get Started</a>
                         @endguest
                     </div>
                 </div>

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Student;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -69,17 +71,37 @@ class StudentController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(User $student)
     {
-        //
+        return view('teachers.students.edit', compact('student'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, User $student)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($student->id)],
+            'password' => 'nullable|string|min:8|confirmed',
+            'class' => 'required|string|in:10A,10B,10C'
+        ]);
+
+        $student->update([
+            'name' => $validated['name'],
+            'email' => $validated['email']
+        ]);
+
+        if ($validated['password']) {
+            $student->update(['password' => Hash::make($validated['password'])]);
+        }
+
+        $student->student->update(['class' => $validated['class']]);
+
+        return redirect()
+            ->route('teacher.students.index')
+            ->with('success', 'Student updated successfully');
     }
 
     /**
@@ -100,6 +122,7 @@ class StudentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'current_password' => 'nullable|required_with:password|current_password',
             'password' => 'nullable|min:8|confirmed',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
         ]);
@@ -112,8 +135,24 @@ class StudentController extends Controller
             $user->profile_picture = $path;
         }
 
-        $user->save();
+        $user->update([
+            'name' => $validated['name'],
+            'email' => $validated['email']
+        ]);
+
+        if (isset($validated['password'])) {
+            $user->update([
+                'password' => Hash::make($validated['password'])
+            ]);
+        }
 
         return back()->with('success', 'Profile updated successfully');
+    }
+
+    public function profile()
+    {
+        return view('students.profile', [
+            'student' => auth()->user()->load('student')
+        ]);
     }
 }

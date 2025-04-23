@@ -19,46 +19,42 @@ class TeacherController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $user = auth()->user();
-
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'email' => 'required|email|unique:users,email,' . auth()->id(),
             'subject' => 'required|string|max:255',
-            'current_password' => 'nullable|required_with:password|current_password',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'current_password' => 'nullable|required_with:password',
             'password' => 'nullable|min:8|confirmed',
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
         ]);
 
-        // Handle profile picture upload
+        $user = auth()->user();
+        $teacher = $user->teacher;
+
         if ($request->hasFile('profile_picture')) {
             // Delete old picture if exists
-            if ($user->profile_picture) {
-                Storage::delete($user->profile_picture);
+            if ($teacher->profile_picture) {
+                Storage::delete($teacher->profile_picture);
             }
-
+            // Store new picture
             $path = $request->file('profile_picture')->store('profile-pictures', 'public');
-            $user->profile_picture = $path;
+            $teacher->profile_picture = $path;
         }
 
-        // Update user details
-        $user->update([
-            'name' => $validated['name'],
-            'email' => $validated['email']
-        ]);
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $teacher->subject = $request->subject;
 
-        // Update password if provided
-        if (isset($validated['password'])) {
-            $user->update([
-                'password' => Hash::make($validated['password'])
-            ]);
+        if ($request->filled('current_password')) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Current password is incorrect']);
+            }
+            $user->password = Hash::make($request->password);
         }
 
-        // Update teacher details
-        $user->teacher->update([
-            'subject' => $validated['subject']
-        ]);
+        $user->save();
+        $teacher->save();
 
-        return back()->with('success', 'Profile updated successfully');
+        return redirect()->route('teacher.profile')->with('success', 'Profile updated successfully');
     }
 }

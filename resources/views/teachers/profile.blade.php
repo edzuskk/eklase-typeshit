@@ -79,7 +79,6 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-
                             <hr class="my-4">
 
                             <h6>Change Password</h6>
@@ -113,11 +112,11 @@
                                     id="password_confirmation" 
                                     name="password_confirmation">
                             </div>
-
-                            <div class="d-grid">
+                            <div class="d-grid gap-3">
                                 <button type="submit" class="btn btn-primary">
-                                    Update Profile
+                                    <i class="bi bi-check-lg"></i> Update Profile
                                 </button>
+                                
                             </div>
                         </form>
                     </div>

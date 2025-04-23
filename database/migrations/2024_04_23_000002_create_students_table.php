@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('class')->nullable();
+            $table->string('profile_picture')->nullable();
             $table->timestamps();
         });
     }

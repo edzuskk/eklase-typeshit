@@ -107,4 +107,12 @@ class User extends Authenticatable
     {
         return $this->role === $role;
     }
+
+    /**
+     * Get the grades associated with the user.
+     */
+    public function grades()
+    {
+        return $this->hasMany(Grade::class, 'student_id');
+    }
 }
