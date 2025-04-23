@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Student;
+use App\Models\Teacher;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+
 
 class AuthController extends Controller
 {
@@ -34,19 +37,25 @@ class AuthController extends Controller
 
     public function showRegister()
     {
-        return view('auth.register');
+        $roles = User::getRoles();
+        return view('auth.register', compact('roles'));
     }
 
-    public function register(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:teacher,student',
-            'class' => 'required_if:role,student|string|nullable'
-        ]);
+public function register(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:8|confirmed',
+        'role' => ['required', 'string', 'in:' . implode(',', User::getRoles())],
+        'class' => 'nullable|string|required_if:role,student',
+        'subject' => 'nullable|string|required_if:role,teacher'
+    ]);
 
+    DB::beginTransaction();
+    
+    try {
+        // Create user
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -54,16 +63,26 @@ class AuthController extends Controller
             'role' => $validated['role']
         ]);
 
+        // Create role-specific records
         if ($validated['role'] === 'student') {
-            Student::create([
-                'user_id' => $user->id,
+            $user->student()->create([
                 'class' => $validated['class']
+            ]);
+        } elseif ($validated['role'] === 'teacher') {
+            $user->teacher()->create([
+                'subject' => $validated['subject']
             ]);
         }
 
+        DB::commit();
         Auth::login($user);
-        return redirect()->route('dashboard');
+        return redirect()->route('dashboard')->with('success', 'Registration successful!');
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->withInput()->withErrors(['error' => 'Registration failed. Please try again.']);
     }
+}
 
     public function logout(Request $request)
     {

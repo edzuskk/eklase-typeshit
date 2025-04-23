@@ -3,8 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class subject extends Model
+class Subject extends Model
 {
-    //
+    protected $fillable = ['name'];
+
+    public function grades(): HasMany
+    {
+        return $this->hasMany(Grade::class);
+    }
 }

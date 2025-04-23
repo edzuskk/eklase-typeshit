@@ -7,43 +7,59 @@ use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\DashboardController;
 
-// Public routes
+// Home and Auth routes
 Route::get('/', function () {
     return view('index');
-});
+})->name('home');
 
-// Authentication routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected routes
-Route::middleware(['auth'])->group(function () {
-    // Dashboard
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Teacher only routes
-    Route::middleware(['role:teacher'])->group(function () {
+    // Teacher routes
+    Route::middleware('role:teacher')->prefix('teacher')->name('teacher.')->group(function () {
+        // Profile
+        Route::controller(TeacherController::class)->group(function () {
+            Route::get('/profile', 'profile')->name('profile');
+            Route::put('/profile', 'updateProfile')->name('profile.update');
+        });
+        
         // Students management
-        Route::resource('students', StudentController::class);
+        Route::controller(StudentController::class)->group(function () {
+            Route::get('/students', 'index')->name('students.index');
+            Route::get('/students/create', 'create')->name('students.create');
+            Route::post('/students', 'store')->name('students.store');
+            Route::get('/students/{student}/edit', 'edit')->name('students.edit');
+            Route::put('/students/{student}', 'update')->name('students.update');
+            Route::delete('/students/{student}', 'destroy')->name('students.destroy');
+        });
         
         // Grades management
-        Route::resource('grades', GradeController::class);
-        
-        // Teacher profile
-        Route::get('/teacher/profile', [TeacherController::class, 'profile'])->name('teacher.profile');
-        Route::put('/teacher/profile', [TeacherController::class, 'updateProfile'])->name('teacher.profile.update');
+        Route::controller(GradeController::class)->group(function () {
+            Route::get('/grades', 'index')->name('grades.index');
+            Route::get('/grades/create', 'create')->name('grades.create');
+            Route::post('/grades', 'store')->name('grades.store');
+            Route::get('/grades/{grade}/edit', 'edit')->name('grades.edit');
+            Route::put('/grades/{grade}', 'update')->name('grades.update');
+            Route::delete('/grades/{grade}', 'destroy')->name('grades.destroy');
+        });
     });
 
-    // Student only routes
-    Route::middleware(['role:student'])->group(function () {
-        // View grades
-        Route::get('/my-grades', [GradeController::class, 'myGrades'])->name('grades.my');
+    // Student routes
+    Route::middleware('role:student')->prefix('student')->name('student.')->group(function () {
+        // Profile
+        Route::controller(StudentController::class)->group(function () {
+            Route::get('/profile', 'profile')->name('profile');
+            Route::put('/profile', 'updateProfile')->name('profile.update');
+        });
         
-        // Student profile
-        Route::get('/student/profile', [StudentController::class, 'profile'])->name('student.profile');
-        Route::put('/student/profile', [StudentController::class, 'updateProfile'])->name('student.profile.update');
+        // Grades
+        Route::get('/grades', [GradeController::class, 'studentGrades'])->name('grades');
     });
 });

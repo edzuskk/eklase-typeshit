@@ -39,16 +39,39 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="role" class="form-label">I am a</label>
-                                <select class="form-select @error('role') is-invalid @enderror" 
-                                    id="role" 
-                                    name="role" 
-                                    required>
-                                    <option value="" selected disabled>Select your role</option>
-                                    <option value="teacher" {{ old('role') == 'teacher' ? 'selected' : '' }}>Teacher</option>
-                                    <option value="student" {{ old('role') == 'student' ? 'selected' : '' }}>Student</option>
+                                <label for="role" class="form-label">Role</label>
+                                <select name="role" id="role" class="form-control" required>
+                                    <option value="">Select role</option>
+                                    @foreach($roles as $role)
+                                        <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>
+                                            {{ ucfirst($role) }}
+                                        </option>
+                                    @endforeach
                                 </select>
-                                @error('role')
+                            </div>
+
+                            <div class="mb-3" id="class-field" style="display: none;">
+                                <label for="class" class="form-label">Class</label>
+                                <input type="text" 
+                                    class="form-control @error('class') is-invalid @enderror" 
+                                    id="class" 
+                                    name="class" 
+                                    value="{{ old('class') }}" 
+                                    placeholder="Enter your class">
+                                @error('class')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3" id="subject-field" style="display: none;">
+                                <label for="subject" class="form-label">Subject</label>
+                                <input type="text" 
+                                    class="form-control @error('subject') is-invalid @enderror" 
+                                    id="subject" 
+                                    name="subject" 
+                                    value="{{ old('subject') }}" 
+                                    placeholder="Enter your subject">
+                                @error('subject')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -91,4 +114,32 @@
             </div>
         </div>
     </div>
+
+    <script>
+    document.getElementById('role').addEventListener('change', function() {
+        const classField = document.getElementById('class-field');
+        const subjectField = document.getElementById('subject-field');
+        
+        if (this.value === 'student') {
+            classField.style.display = 'block';
+            subjectField.style.display = 'none';
+        } else if (this.value === 'teacher') {
+            classField.style.display = 'none';
+            subjectField.style.display = 'block';
+        } else {
+            classField.style.display = 'none';
+            subjectField.style.display = 'none';
+        }
+    });
+
+    // Set initial state based on old input
+    window.addEventListener('load', function() {
+        const role = document.getElementById('role').value;
+        if (role === 'student') {
+            document.getElementById('class-field').style.display = 'block';
+        } else if (role === 'teacher') {
+            document.getElementById('subject-field').style.display = 'block';
+        }
+    });
+    </script>
 </x-layout>
