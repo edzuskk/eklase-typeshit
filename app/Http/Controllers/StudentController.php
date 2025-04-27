@@ -155,4 +155,18 @@ class StudentController extends Controller
             'student' => auth()->user()->load('student')
         ]);
     }
+
+    public function grades(Request $request)
+    {
+        $user = auth()->user();
+        $grades = $user->grades();
+
+        if ($request->filled('subject')) {
+            $grades->where('subject', $request->subject);
+        }
+
+        $grades = $grades->latest()->get();
+
+        return view('students.grades', compact('grades'));
+    }
 }

@@ -18,28 +18,29 @@
                         <form action="{{ route('teacher.profile.update') }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
-
-                            <div class="text-center mb-4">
-                                <div class="position-relative d-inline-block">
-                                    <img src="{{ $teacher->profile_picture ? Storage::url($teacher->profile_picture) : asset('images/default-avatar.png') }}" 
-                                         alt="Profile Picture" 
-                                         class="rounded-circle"
-                                         style="width: 150px; height: 150px; object-fit: cover;">
-                                    <label for="profile_picture" 
-                                           class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2"
-                                           style="cursor: pointer;">
-                                        <i class="bi bi-camera"></i>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Profile Picture</label>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ auth()->user()->profile_picture 
+                                        ? Storage::url(auth()->user()->profile_picture) 
+                                        : asset('images/default-avatar.png') }}" 
+                                        class="rounded-circle me-3" 
+                                        style="width: 100px; height: 100px; object-fit: cover;"
+                                        alt="Profile Picture">
+                                    <div>
                                         <input type="file" 
-                                               id="profile_picture" 
-                                               name="profile_picture" 
-                                               class="d-none"
-                                               accept="image/*">
-                                    </label>
+                                            class="form-control @error('profile_picture') is-invalid @enderror" 
+                                            id="profile_picture" 
+                                            name="profile_picture"
+                                            accept="image/*">
+                                        @error('profile_picture')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                                 </div>
-                                @error('profile_picture')
-                                    <div class="text-danger mt-2">{{ $message }}</div>
-                                @enderror
                             </div>
+                            
 
                             <div class="mb-3">
                                 <label for="name" class="form-label">Name</label>
@@ -124,7 +125,6 @@
             </div>
         </div>
     </div>
-
     @push('scripts')
     <script>
         document.getElementById('profile_picture').addEventListener('change', function(e) {

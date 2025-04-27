@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->string('role'); // 'teacher' or 'student'
-            $table->string('class')->nullable(); // Nullable for teachers
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('profile_picture')->nullable(); // Add this line
+            $table->string('role');
             $table->rememberToken();
             $table->timestamps();
         });

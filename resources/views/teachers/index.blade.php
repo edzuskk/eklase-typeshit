@@ -64,12 +64,9 @@
                                 <td>{{ $teacher->email }}</td>
                                 <td>{{ $teacher->subjects ?? 'Not assigned' }}</td>
                                 <td>
-                                    <a href="{{ route('teachers.show', $teacher->id) }}" class="btn btn-sm btn-info">
-                                        View
-                                    </a>
                                     @if(auth()->user()->role === 'admin')
                                     <a href="{{ route('teachers.edit', $teacher->id) }}" class="btn btn-sm btn-primary">
-                                        Edit
+                                        Edit Student
                                     </a>
                                     <form action="{{ route('teachers.destroy', $teacher->id) }}" method="POST" class="d-inline">
                                         @csrf

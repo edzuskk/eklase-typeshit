@@ -24,12 +24,6 @@
                                 <i class="bi bi-people"></i> Students
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('teacher.grades.*') ? 'active' : '' }}" 
-                               href="{{ route('teacher.grades.index') }}">
-                                <i class="bi bi-card-checklist"></i> Grades
-                            </a>
-                        </li>
                     @endif
                 </ul>
                 

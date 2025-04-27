@@ -24,7 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Teacher routes
-    Route::middleware('role:teacher')->prefix('teacher')->name('teacher.')->group(function () {
+    Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')->group(function () {
         // Profile
         Route::controller(TeacherController::class)->group(function () {
             Route::get('/profile', 'profile')->name('profile');
@@ -55,11 +55,13 @@ Route::middleware('auth')->group(function () {
             ->name('teacher.students.grades.create');
         Route::post('/students/{student}/grades', [TeacherGradeController::class, 'store'])
             ->name('teacher.students.grades.store');
-    });
 
-    Route::post('/teacher/students/{student}/grades', [TeacherGradeController::class, 'store'])
-        ->name('teacher.students.grades.store')
-        ->middleware(['auth', 'role:teacher']);
+        Route::put('/teacher/profile', [TeacherProfileController::class, 'update'])
+            ->name('teacher.profile.update');
+        
+        Route::put('/grades/{grade}', [TeacherGradeController::class, 'update'])
+            ->name('grades.update');
+    });
 
     // Student routes
     Route::middleware('role:student')->prefix('student')->name('student.')->group(function () {

@@ -10,11 +10,10 @@ class TeacherGradeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::query()
-            ->where('role', 'student')
+        $query = User::where('role', 'student')
             ->with(['student', 'grades']);
 
-        // Apply search filter
+        // Search by name or email
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -23,23 +22,21 @@ class TeacherGradeController extends Controller
             });
         }
 
-        // Apply class filter
+        // Filter by class
         if ($request->filled('class')) {
             $query->whereHas('student', function($q) use ($request) {
                 $q->where('class', $request->class);
             });
         }
 
-        // Apply subject filter
+        // Filter by subject grades
         if ($request->filled('subject')) {
             $query->whereHas('grades', function($q) use ($request) {
                 $q->where('subject', $request->subject);
             });
         }
 
-        $students = $query->latest()->paginate(10)
-            ->withQueryString(); // This preserves the filter parameters in pagination links
-
+        $students = $query->latest()->paginate(10)->withQueryString();
         return view('teachers.students', compact('students'));
     }
 }

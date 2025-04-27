@@ -84,9 +84,20 @@
                                     <td>{{ $student->student->class ?? 'Not assigned' }}</td>
                                     <td>
                                         @forelse($student->grades as $grade)
-                                            <span class="badge bg-primary me-1" title="{{ $grade->created_at->format('Y-m-d') }}">
-                                                {{ $grade->subject }}: {{ $grade->grade }}
-                                            </span>
+                                            <div class="d-inline-block position-relative me-2 mb-2">
+                                                <button type="button" 
+                                                    class="badge bg-primary border-0"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editGradeModal"
+                                                    data-grade-id="{{ $grade->id }}"
+                                                    data-student-name="{{ $student->name }}"
+                                                    data-subject="{{ $grade->subject }}"
+                                                    data-grade-value="{{ $grade->grade }}"
+                                                    style="cursor: pointer;">
+                                                    {{ $grade->subject }}: {{ $grade->grade }}
+                                                    <i class="bi bi-pencil-fill ms-1"></i>
+                                                </button>
+                                            </div>
                                         @empty
                                             <span class="text-muted">No grades yet</span>
                                         @endforelse
@@ -176,81 +187,114 @@
         </div>
     </div>
 
+    <!-- Edit Grade Modal -->
+<div class="modal fade" id="editGradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Grade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editGradeForm" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="edit_subject" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_grade" class="form-label">Grade</label>
+                        <input type="number" 
+                            class="form-control" 
+                            id="edit_grade" 
+                            name="grade"
+                            min="1" 
+                            max="10" 
+                            required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Grade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
     @push('scripts')
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('addGradeModal');
-        const form = document.getElementById('gradeForm');
-        
-        // Clear previous errors when modal opens
-        modal.addEventListener('show.bs.modal', function(event) {
-            clearErrors();
-            const button = event.relatedTarget;
-            const studentId = button.getAttribute('data-student-id');
-            form.action = `/teacher/students/${studentId}/grades`;
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            const editGradeModal = document.getElementById('editGradeModal');
+            const editForm = document.getElementById('editGradeForm');
 
-        // Handle form submission
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            clearErrors();
-
-            try {
-                const response = await fetch(this.action, {
-                    method: 'POST',
-                    body: new FormData(this),
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    }
+            if (editGradeModal) {
+                editGradeModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const gradeId = button.getAttribute('data-grade-id');
+                    const subject = button.getAttribute('data-subject');
+                    const gradeValue = button.getAttribute('data-grade-value');
+                    
+                    const form = this.querySelector('#editGradeForm');
+                    form.action = `/teacher/grades/${gradeId}`;
+                    
+                    this.querySelector('#edit_subject').value = subject;
+                    this.querySelector('#edit_grade').value = gradeValue;
                 });
 
-                const data = await response.json();
+                editForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    try {
+                        const formData = new FormData(this);
+                        formData.append('_method', 'PUT');
 
-                if (response.ok) {
-                    const modalInstance = bootstrap.Modal.getInstance(modal);
-                    modalInstance.hide();
-                    showAlert('success', data.message);
-                    setTimeout(() => location.reload(), 1500);
-                } else if (response.status === 422) {
-                    // Show validation errors
-                    Object.keys(data.errors).forEach(field => {
-                        const input = form.querySelector(`[name="${field}"]`);
-                        if (input) {
-                            input.classList.add('is-invalid');
-                            const feedback = document.createElement('div');
-                            feedback.className = 'invalid-feedback';
-                            feedback.textContent = data.errors[field][0];
-                            input.parentNode.appendChild(feedback);
+                        const response = await fetch(this.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+
+                        // Check response type
+                        const contentType = response.headers.get('content-type');
+                        if (!contentType || !contentType.includes('application/json')) {
+                            console.error('Non-JSON response:', await response.text());
+                            throw new Error('Server returned non-JSON response');
                         }
-                    });
-                } else {
-                    throw new Error(data.message || 'An error occurred');
-                }
-            } catch (error) {
-                showAlert('danger', error.message);
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            const modal = bootstrap.Modal.getInstance(editGradeModal);
+                            modal.hide();
+                            showAlert('success', data.message || 'Grade updated successfully');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            throw new Error(data.message || data.error || 'Failed to update grade');
+                        }
+                    } catch (error) {
+                        showAlert('danger', error.message);
+                        console.error('Error:', error);
+                    }
+                });
+            }
+
+            // Helper function to show alerts
+            function showAlert(type, message) {
+                const alert = document.createElement('div');
+                alert.className = `alert alert-${type} alert-dismissible fade show`;
+                alert.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.container').insertAdjacentElement('afterbegin', alert);
             }
         });
-
-        function clearErrors() {
-            form.querySelectorAll('.is-invalid').forEach(input => {
-                input.classList.remove('is-invalid');
-            });
-            form.querySelectorAll('.invalid-feedback').forEach(feedback => {
-                feedback.remove();
-            });
-        }
-
-        function showAlert(type, message) {
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type} alert-dismissible fade show`;
-            alert.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.querySelector('.container').insertAdjacentElement('afterbegin', alert);
-        }
-    });
     </script>
     @endpush
 </x-layout>
