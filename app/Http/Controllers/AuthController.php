@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Subject;
 
 
 class AuthController extends Controller
@@ -37,8 +38,10 @@ class AuthController extends Controller
 
     public function showRegister()
     {
-        $roles = User::getRoles();
-        return view('auth.register', compact('roles'));
+        $roles = ['student', 'teacher'];
+        $subjects = Subject::orderBy('name')->pluck('name'); // You can fetch this from database
+        
+        return view('auth.register', compact('roles', 'subjects'));
     }
 
 public function register(Request $request)

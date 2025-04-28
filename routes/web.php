@@ -7,6 +7,7 @@ use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TeacherGradeController;
+use App\Http\Controllers\TeacherStudentController; // Add this line
 
 // Home and Auth routes
 Route::get('/', function () {
@@ -25,14 +26,8 @@ Route::middleware('auth')->group(function () {
 
     // Teacher routes
     Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')->group(function () {
-        // Profile
-        Route::controller(TeacherController::class)->group(function () {
-            Route::get('/profile', 'profile')->name('profile');
-            Route::put('/profile', 'updateProfile')->name('profile.update');
-        });
-        
-        // Students management
-        Route::controller(StudentController::class)->group(function () {
+        // Student management
+        Route::controller(TeacherStudentController::class)->group(function () {
             Route::get('/students', 'index')->name('students.index');
             Route::get('/students/create', 'create')->name('students.create');
             Route::post('/students', 'store')->name('students.store');
@@ -48,7 +43,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/grades', 'store')->name('grades.store');
             Route::get('/grades/{grade}/edit', 'edit')->name('grades.edit');
             Route::put('/grades/{grade}', 'update')->name('grades.update');
-            Route::delete('/grades/{grade}', 'destroy')->name('grades.destroy');
+            Route::delete('/grades/{grade}', [TeacherStudentController::class, 'deleteGrade'])
+                ->name('grades.delete');
         });
 
         Route::get('/students/{student}/grades/create', [TeacherGradeController::class, 'create'])
@@ -56,11 +52,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/students/{student}/grades', [TeacherGradeController::class, 'store'])
             ->name('teacher.students.grades.store');
 
-        Route::put('/teacher/profile', [TeacherProfileController::class, 'update'])
-            ->name('teacher.profile.update');
-        
-        Route::put('/grades/{grade}', [TeacherGradeController::class, 'update'])
-            ->name('grades.update');
+        // Teacher profile routes
+        Route::controller(TeacherController::class)->group(function () {
+            Route::get('/profile', 'profile')->name('profile');
+            Route::put('/profile', 'updateProfile')->name('profile.update');
+            Route::post('/profile/picture', 'updateProfilePicture')->name('profile.picture.update');
+        });
     });
 
     // Student routes

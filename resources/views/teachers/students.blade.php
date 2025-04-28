@@ -20,30 +20,37 @@
                 <form action="{{ route('teacher.students.index') }}" method="GET" class="row g-3">
                     <div class="col-md-4">
                         <label for="search" class="form-label">Search by Name/Email</label>
-                        <input type="text" class="form-control" id="search" name="search" 
-                            value="{{ request('search') }}" placeholder="Enter name or email">
+                        <input type="text" 
+                            class="form-control" 
+                            id="search" 
+                            name="search" 
+                            value="{{ $search ?? '' }}" 
+                            placeholder="Enter name or email">
                     </div>
                     <div class="col-md-3">
                         <label for="class" class="form-label">Filter by Class</label>
                         <select class="form-select" id="class" name="class">
                             <option value="">All Classes</option>
-                            <option value="10A" {{ request('class') == '10A' ? 'selected' : '' }}>10A</option>
-                            <option value="10B" {{ request('class') == '10B' ? 'selected' : '' }}>10B</option>
-                            <option value="10C" {{ request('class') == '10C' ? 'selected' : '' }}>10C</option>
+                            @foreach(['10A', '10B', '10C'] as $class)
+                                <option value="{{ $class }}" {{ request('class') == $class ? 'selected' : '' }}>
+                                    {{ $class }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="col-md-3">
                         <label for="subject" class="form-label">Filter by Subject</label>
                         <select class="form-select" id="subject" name="subject">
                             <option value="">All Subjects</option>
-                            <option value="Math" {{ request('subject') == 'Math' ? 'selected' : '' }}>Mathematics</option>
-                            <option value="English" {{ request('subject') == 'English' ? 'selected' : '' }}>English</option>
-                            <option value="Science" {{ request('subject') == 'Science' ? 'selected' : '' }}>Science</option>
-                            <option value="History" {{ request('subject') == 'History' ? 'selected' : '' }}>History</option>
+                            @foreach(App\Models\User::getSubjects() as $subject)
+                                <option value="{{ $subject }}" {{ request('subject') == $subject ? 'selected' : '' }}>
+                                    {{ $subject }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <div class="d-grid gap-2 d-md-block">
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="d-grid gap-2 w-100">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-search"></i> Search
                             </button>
@@ -97,6 +104,12 @@
                                                     {{ $grade->subject }}: {{ $grade->grade }}
                                                     <i class="bi bi-pencil-fill ms-1"></i>
                                                 </button>
+                                                <button type="button" 
+                                                    class="btn btn-sm btn-danger delete-grade"
+                                                    data-grade-id="{{ $grade->id }}"
+                                                    style="position: absolute; top: -8px; right: -8px; padding: 0.1rem 0.3rem; font-size: 0.6rem;">
+                                                    <i class="bi bi-x">-</i>
+                                                </button>
                                             </div>
                                         @empty
                                             <span class="text-muted">No grades yet</span>
@@ -144,7 +157,7 @@
 
                 @if($students->hasPages())
                     <div class="mt-4">
-                        {{ $students->links() }}
+                        {{ $students->appends(request()->query())->links() }}
                     </div>
                 @endif
             </div>
@@ -166,10 +179,9 @@
                             <label for="subject" class="form-label">Subject</label>
                             <select class="form-select" id="subject" name="subject" required>
                                 <option value="">Select Subject</option>
-                                <option value="Math">Mathematics</option>
-                                <option value="English">English</option>
-                                <option value="Science">Science</option>
-                                <option value="History">History</option>
+                                @foreach(App\Models\User::getSubjects() as $subject)
+                                    <option value="{{ $subject }}">{{ $subject }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="mb-3">
@@ -224,77 +236,111 @@
 </div>
 
     @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const editGradeModal = document.getElementById('editGradeModal');
-            const editForm = document.getElementById('editGradeForm');
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editGradeModal = document.getElementById('editGradeModal');
+    const editForm = document.getElementById('editGradeForm');
 
-            if (editGradeModal) {
-                editGradeModal.addEventListener('show.bs.modal', function(event) {
-                    const button = event.relatedTarget;
-                    const gradeId = button.getAttribute('data-grade-id');
-                    const subject = button.getAttribute('data-subject');
-                    const gradeValue = button.getAttribute('data-grade-value');
-                    
-                    const form = this.querySelector('#editGradeForm');
-                    form.action = `/teacher/grades/${gradeId}`;
-                    
-                    this.querySelector('#edit_subject').value = subject;
-                    this.querySelector('#edit_grade').value = gradeValue;
-                });
+    if (editGradeModal) {
+        editGradeModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const gradeId = button.getAttribute('data-grade-id');
+            const subject = button.getAttribute('data-subject');
+            const gradeValue = button.getAttribute('data-grade-value');
+            
+            const form = this.querySelector('#editGradeForm');
+            form.action = `/teacher/grades/${gradeId}`;
+            
+            this.querySelector('#edit_subject').value = subject;
+            this.querySelector('#edit_grade').value = gradeValue;
+        });
 
-                editForm.addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    
-                    try {
-                        const formData = new FormData(this);
-                        formData.append('_method', 'PUT');
+        editForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const formData = new FormData(this);
+                formData.append('_method', 'PUT');
 
-                        const response = await fetch(this.action, {
-                            method: 'POST',
-                            body: formData,
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
-
-                        // Check response type
-                        const contentType = response.headers.get('content-type');
-                        if (!contentType || !contentType.includes('application/json')) {
-                            console.error('Non-JSON response:', await response.text());
-                            throw new Error('Server returned non-JSON response');
-                        }
-
-                        const data = await response.json();
-
-                        if (response.ok) {
-                            const modal = bootstrap.Modal.getInstance(editGradeModal);
-                            modal.hide();
-                            showAlert('success', data.message || 'Grade updated successfully');
-                            setTimeout(() => location.reload(), 1500);
-                        } else {
-                            throw new Error(data.message || data.error || 'Failed to update grade');
-                        }
-                    } catch (error) {
-                        showAlert('danger', error.message);
-                        console.error('Error:', error);
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
-            }
 
-            // Helper function to show alerts
-            function showAlert(type, message) {
-                const alert = document.createElement('div');
-                alert.className = `alert alert-${type} alert-dismissible fade show`;
-                alert.innerHTML = `
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `;
-                document.querySelector('.container').insertAdjacentElement('afterbegin', alert);
+                // Check response type
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.error('Non-JSON response:', await response.text());
+                    throw new Error('Server returned non-JSON response');
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const modal = bootstrap.Modal.getInstance(editGradeModal);
+                    modal.hide();
+                    showAlert('success', data.message || 'Grade updated successfully');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    throw new Error(data.message || data.error || 'Failed to update grade');
+                }
+            } catch (error) {
+                showAlert('danger', error.message);
+                console.error('Error:', error);
             }
         });
-    </script>
-    @endpush
+    }
+
+    // Handle grade deletion
+    document.querySelectorAll('.delete-grade').forEach(button => {
+        button.addEventListener('click', async function() {
+            if (!confirm('Are you sure you want to delete this grade?')) {
+                return;
+            }
+
+            const gradeId = this.getAttribute('data-grade-id');
+
+            try {
+                const response = await fetch(`/teacher/grades/${gradeId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('success', data.message || 'Grade deleted successfully');
+                    this.closest('.d-inline-block').remove();
+                } else {
+                    throw new Error(data.message || 'Failed to delete grade');
+                }
+            } catch (error) {
+                showAlert('danger', error.message);
+                console.error('Error:', error);
+            }
+        });
+    });
+
+    // Helper function to show alerts
+    function showAlert(type, message) {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.container').insertAdjacentElement('afterbegin', alert);
+    }
+});
+</script>
+@endpush
 </x-layout>

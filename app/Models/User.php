@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
@@ -69,11 +68,26 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is a teacher
+     * Check if user has the given role
+     *
+     * @param string $role
+     * @return bool
      */
-    public function isTeacher(): bool
+    public function hasRole(string $role): bool
     {
-        return $this->role === self::ROLE_TEACHER;
+        return $this->role === $role;
+    }
+
+    /**
+     * Check if user has any of the given roles
+     *
+     * @param array|string $roles
+     * @return bool
+     */
+    public function hasAnyRole(array|string $roles): bool
+    {
+        $roles = is_array($roles) ? $roles : [$roles];
+        return in_array($this->role, $roles);
     }
 
     /**
@@ -85,7 +99,15 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the student record associated with the user.
+     * Check if user is a teacher
+     */
+    public function isTeacher(): bool
+    {
+        return $this->role === self::ROLE_TEACHER;
+    }
+
+    /**
+     * Get the student record associated with the user
      */
     public function student(): HasOne
     {
@@ -93,19 +115,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the teacher record associated with the user.
+     * Get the teacher record associated with the user
      */
     public function teacher(): HasOne
     {
         return $this->hasOne(Teacher::class);
-    }
-
-    /**
-     * Check if user has a specific role
-     */
-    public function hasRole(string $role): bool
-    {
-        return $this->role === $role;
     }
 
     /**
@@ -114,5 +128,21 @@ class User extends Authenticatable
     public function grades()
     {
         return $this->hasMany(Grade::class, 'student_id');
+    }
+
+    /**
+     * Get available subjects
+     */
+    public static function getSubjects(): array
+    {
+        return [
+            'Mathematics',
+            'English',
+            'Science',
+            'History',
+            'Physics',
+            'Chemistry',
+            'Biology'
+        ];
     }
 }

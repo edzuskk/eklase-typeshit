@@ -65,12 +65,16 @@
 
                             <div class="mb-3" id="subject-field" style="display: none;">
                                 <label for="subject" class="form-label">Subject</label>
-                                <input type="text" 
-                                    class="form-control @error('subject') is-invalid @enderror" 
-                                    id="subject" 
-                                    name="subject" 
-                                    value="{{ old('subject') }}" 
-                                    placeholder="Enter your subject">
+                                <select class="form-select @error('subject') is-invalid @enderror" 
+                                        id="subject" 
+                                        name="subject">
+                                    <option value="">-- Select Subject --</option>
+                                    @foreach($subjects as $subject)
+                                        <option value="{{ $subject }}" {{ old('subject') == $subject ? 'selected' : '' }}>
+                                            {{ $subject }}
+                                        </option>
+                                    @endforeach
+                                </select>
                                 @error('subject')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
