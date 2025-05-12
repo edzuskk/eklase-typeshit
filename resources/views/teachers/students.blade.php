@@ -1,3 +1,7 @@
+@php
+use App\Models\User;
+@endphp
+
 <x-layout>
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -122,8 +126,8 @@
                                                 <i class="bi bi-pencil"></i> Edit
                                             </a>
                                             <button type="button" 
-                                                class="btn btn-sm btn-success add-grade-btn" 
-                                                data-bs-toggle="modal" 
+                                                class="btn btn-primary btn-sm"
+                                                data-bs-toggle="modal"
                                                 data-bs-target="#addGradeModal"
                                                 data-student-id="{{ $student->id }}"
                                                 data-student-name="{{ $student->name }}">
@@ -172,27 +176,35 @@
                     <h5 class="modal-title">Add Grade</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form id="gradeForm" action="" method="POST">
+                <form id="addGradeForm" method="POST">
                     @csrf
                     <div class="modal-body">
+                        <input type="hidden" name="student_id" id="student_id">
+                        
                         <div class="mb-3">
                             <label for="subject" class="form-label">Subject</label>
                             <select class="form-select" id="subject" name="subject" required>
                                 <option value="">Select Subject</option>
-                                @foreach(App\Models\User::getSubjects() as $subject)
+                                @foreach($subjects as $subject)
                                     <option value="{{ $subject }}">{{ $subject }}</option>
                                 @endforeach
                             </select>
                         </div>
+
                         <div class="mb-3">
                             <label for="grade" class="form-label">Grade</label>
-                            <input type="number" class="form-control" id="grade" name="grade"
-                                min="1" max="10" step="1" required>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="grade" 
+                                   name="grade" 
+                                   min="1" 
+                                   max="10" 
+                                   required>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Grade</button>
+                        <button type="submit" class="btn btn-primary">Add Grade</button>
                     </div>
                 </form>
             </div>
@@ -272,22 +284,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
 
-                // Check response type
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    console.error('Non-JSON response:', await response.text());
-                    throw new Error('Server returned non-JSON response');
-                }
-
                 const data = await response.json();
 
                 if (response.ok) {
                     const modal = bootstrap.Modal.getInstance(editGradeModal);
                     modal.hide();
-                    showAlert('success', data.message || 'Grade updated successfully');
-                    setTimeout(() => location.reload(), 1500);
+                    showAlert('success', data.message);
+                    
+                    // Update the grade display without page reload
+                    const gradeButton = document.querySelector(`[data-grade-id="${formData.get('grade_id')}"]`);
+                    if (gradeButton) {
+                        gradeButton.textContent = `${formData.get('subject')}: ${formData.get('grade')}`;
+                    } else {
+                        setTimeout(() => location.reload(), 1500);
+                    }
                 } else {
-                    throw new Error(data.message || data.error || 'Failed to update grade');
+                    throw new Error(data.message || 'Failed to update grade');
                 }
             } catch (error) {
                 showAlert('danger', error.message);
@@ -330,15 +342,77 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Helper function to show alerts
+    // Add Grade Modal Handling
+    const addGradeModal = document.getElementById('addGradeModal');
+    const addGradeForm = document.getElementById('addGradeForm');
+
+    if (addGradeModal) {
+        addGradeModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const studentId = button.getAttribute('data-student-id');
+            const studentName = button.getAttribute('data-student-name');
+            
+            const form = this.querySelector('#addGradeForm');
+            form.action = `/teacher/grades`;
+            
+            this.querySelector('#student_id').value = studentId;
+            this.querySelector('.modal-title').textContent = `Add Grade for ${studentName}`;
+
+            // Reset form
+            form.reset();
+        });
+
+        addGradeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const formData = new FormData(this);
+
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.message || 'Failed to add grade');
+                }
+
+                const data = await response.json();
+                
+                const modal = bootstrap.Modal.getInstance(addGradeModal);
+                modal.hide();
+                
+                showAlert('success', data.message || 'Grade added successfully');
+                
+                // Reload after success to show new grade
+                setTimeout(() => location.reload(), 1500);
+            } catch (error) {
+                showAlert('danger', error.message);
+                console.error('Error:', error);
+            }
+        });
+    }
+
+    // Alert helper function
     function showAlert(type, message) {
-        const alert = document.createElement('div');
-        alert.className = `alert alert-${type} alert-dismissible fade show`;
-        alert.innerHTML = `
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-        document.querySelector('.container').insertAdjacentElement('afterbegin', alert);
+        
+        const container = document.querySelector('.container');
+        container.insertAdjacentElement('afterbegin', alertDiv);
+
+        // Auto dismiss after 3 seconds
+        setTimeout(() => alertDiv.remove(), 3000);
     }
 });
 </script>

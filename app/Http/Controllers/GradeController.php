@@ -3,10 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Grade;
-use App\Models\Student;
-use App\Models\Subject;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class GradeController extends Controller
 {
@@ -46,17 +44,34 @@ class GradeController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
-            'subject' => 'required|string|max:255',
-            'value' => 'required|numeric|min:0|max:100',
-            'comments' => 'nullable|string|max:1000'
-        ]);
+        try {
+            $validated = $request->validate([
+                'student_id' => 'required|exists:users,id',
+                'subject' => 'required|string',
+                'grade' => 'required|integer|between:1,10'
+            ]);
 
-        Grade::create($validated);
+            $grade = Grade::create($validated);
 
-        return redirect()->route('teacher.grades.index')
-            ->with('success', 'Grade added successfully');
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Grade added successfully',
+                    'grade' => $grade
+                ]);
+            }
+
+            return back()->with('success', 'Grade added successfully');
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 422);
+            }
+
+            return back()->withErrors(['error' => 'Failed to add grade']);
+        }
     }
 
     public function show(string $id)
@@ -69,9 +84,33 @@ class GradeController extends Controller
         //
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, Grade $grade)
     {
-        //
+        try {
+            $validated = $request->validate([
+                'grade' => 'required|integer|between:1,10'
+            ]);
+
+            $grade->update($validated);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Grade updated successfully'
+                ]);
+            }
+
+            return back()->with('success', 'Grade updated successfully');
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 422);
+            }
+
+            return back()->withErrors(['error' => 'Failed to update grade']);
+        }
     }
 
     public function destroy(string $id)

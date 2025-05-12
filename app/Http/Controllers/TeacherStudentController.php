@@ -47,7 +47,8 @@ class TeacherStudentController extends Controller
             'students' => $students,
             'search' => $request->search,
             'currentClass' => $request->class,
-            'currentSubject' => $request->subject
+            'currentSubject' => $request->subject,
+            'subjects' => User::getSubjects() // Add this line
         ]);
     }
 

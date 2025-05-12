@@ -14,7 +14,6 @@
                         <form action="{{ route('teacher.students.update', $student) }}" method="POST">
                             @csrf
                             @method('PUT')
-
                             <div class="mb-3">
                                 <label for="name" class="form-label">Name</label>
                                 <input type="text" 

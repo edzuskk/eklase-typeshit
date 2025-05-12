@@ -42,7 +42,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/grades/create', 'create')->name('grades.create');
             Route::post('/grades', 'store')->name('grades.store');
             Route::get('/grades/{grade}/edit', 'edit')->name('grades.edit');
-            Route::put('/grades/{grade}', 'update')->name('grades.update');
+            Route::put('/grades/{grade}', [GradeController::class, 'update'])->name('grades.update');
             Route::delete('/grades/{grade}', [TeacherStudentController::class, 'deleteGrade'])
                 ->name('grades.delete');
         });
