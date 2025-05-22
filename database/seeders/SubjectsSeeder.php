@@ -7,7 +7,7 @@ use Illuminate\Database\Seeder;
 
 class SubjectsSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
         $subjects = [
             'Mathematics',
@@ -15,12 +15,13 @@ class SubjectsSeeder extends Seeder
             'Science',
             'History',
             'Physics',
-            'Chemistry',
-            'Biology'
         ];
 
         foreach ($subjects as $subject) {
-            Subject::create(['name' => $subject]);
+            Subject::updateOrCreate(
+                ['name' => $subject],
+                ['name' => $subject]
+            );
         }
     }
 }

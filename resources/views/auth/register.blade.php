@@ -17,8 +17,10 @@
                                     id="name" 
                                     name="name" 
                                     value="{{ old('name') }}" 
-                                    placeholder="Enter your full name"
-                                    required>
+                                    required 
+                                    {{-- Updated pattern to include full Unicode ranges for letters --}}
+                                    pattern="[\p{L}\s]+"
+                                    title="Name can only contain letters (including Latvian) and spaces">
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -52,12 +54,16 @@
 
                             <div class="mb-3" id="class-field" style="display: none;">
                                 <label for="class" class="form-label">Class</label>
-                                <input type="text" 
-                                    class="form-control @error('class') is-invalid @enderror" 
-                                    id="class" 
-                                    name="class" 
-                                    value="{{ old('class') }}" 
-                                    placeholder="Enter your class">
+                                <select class="form-select @error('class') is-invalid @enderror" 
+                                        id="class" 
+                                        name="class">
+                                    <option value="">-- Select Class --</option>
+                                    @foreach(['10A', '10B', '10C'] as $class)
+                                        <option value="{{ $class }}" {{ old('class') == $class ? 'selected' : '' }}>
+                                            {{ $class }}
+                                        </option>
+                                    @endforeach
+                                </select>
                                 @error('class')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

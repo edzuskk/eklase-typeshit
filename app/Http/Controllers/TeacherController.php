@@ -2,12 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\Subject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class TeacherController extends Controller
 {
+    public function index(Request $request)
+    {
+        $teachers = User::where('role', User::ROLE_TEACHER)
+            ->when($request->filled('search'), function($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->search . '%')
+                      ->orWhere('email', 'like', '%' . $request->search . '%');
+            })
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('teachers.index', [
+            'teachers' => $teachers,
+            'subjects' => Subject::getList()
+        ]);
+    }
+
     public function profile()
     {
         return view('teachers.profile');

@@ -169,6 +169,42 @@ use App\Models\User;
     </div>
 
     <!-- Grade Modal -->
+    <div class="modal fade" id="editGradeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Grade</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editGradeForm" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="edit_subject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="edit_subject" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_grade" class="form-label">Grade</label>
+                            <input type="number" 
+                                class="form-control" 
+                                id="edit_grade" 
+                                name="grade"
+                                min="1" 
+                                max="10" 
+                                required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Grade</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Grade Modal -->
     <div class="modal fade" id="addGradeModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -185,8 +221,8 @@ use App\Models\User;
                             <label for="subject" class="form-label">Subject</label>
                             <select class="form-select" id="subject" name="subject" required>
                                 <option value="">Select Subject</option>
-                                @foreach($subjects as $subject)
-                                    <option value="{{ $subject }}">{{ $subject }}</option>
+                                @foreach(App\Models\Subject::all() as $subject)
+                                    <option value="{{ $subject->id }}">{{ $subject->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -210,42 +246,6 @@ use App\Models\User;
             </div>
         </div>
     </div>
-
-    <!-- Edit Grade Modal -->
-<div class="modal fade" id="editGradeModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Grade</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editGradeForm" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="edit_subject" class="form-label">Subject</label>
-                        <input type="text" class="form-control" id="edit_subject" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_grade" class="form-label">Grade</label>
-                        <input type="number" 
-                            class="form-control" 
-                            id="edit_grade" 
-                            name="grade"
-                            min="1" 
-                            max="10" 
-                            required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Grade</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
     @push('scripts')
 <script>
@@ -357,8 +357,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             this.querySelector('#student_id').value = studentId;
             this.querySelector('.modal-title').textContent = `Add Grade for ${studentName}`;
-
-            // Reset form
             form.reset();
         });
 
@@ -378,20 +376,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
 
+                const data = await response.json();
+
                 if (!response.ok) {
-                    const data = await response.json();
                     throw new Error(data.message || 'Failed to add grade');
                 }
 
-                const data = await response.json();
-                
                 const modal = bootstrap.Modal.getInstance(addGradeModal);
                 modal.hide();
-                
-                showAlert('success', data.message || 'Grade added successfully');
-                
-                // Reload after success to show new grade
+                showAlert('success', 'Grade added successfully');
                 setTimeout(() => location.reload(), 1500);
+
             } catch (error) {
                 showAlert('danger', error.message);
                 console.error('Error:', error);

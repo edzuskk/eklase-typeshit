@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Subject;
+use Illuminate\Support\Facades\Validator;
 
 
 class AuthController extends Controller
@@ -46,14 +47,29 @@ class AuthController extends Controller
 
 public function register(Request $request)
 {
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
+    $validator = Validator::make($request->all(), [
+        'name' => [
+            'required',
+            'string',
+            'max:255',
+            'regex:/^[\p{L}\s]+$/u'  // Updated regex to use Unicode property
+        ],
         'email' => 'required|string|email|max:255|unique:users',
         'password' => 'required|string|min:8|confirmed',
-        'role' => ['required', 'string', 'in:' . implode(',', User::getRoles())],
-        'class' => 'nullable|string|required_if:role,student',
-        'subject' => 'nullable|string|required_if:role,teacher'
+        'role' => 'required|in:student,teacher',
+        'class' => 'required_if:role,student',
+        'subject' => 'required_if:role,teacher'
+    ], [
+        'name.regex' => 'Name can only contain letters (including Latvian) and spaces',
+        'class.required_if' => 'Class field is required for students',
+        'subject.required_if' => 'Subject field is required for teachers'
     ]);
+
+    if ($validator->fails()) {
+        return back()
+            ->withErrors($validator)
+            ->withInput();
+    }
 
     DB::beginTransaction();
     
